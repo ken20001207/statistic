@@ -35,7 +35,7 @@
         "react-build": "react-scripts build",
         "electron-build": "tsc electron.ts && cp electron.js ./public/electron.js",
         "electron-start": "concurrently \"BROWSER=none yarn react-start\" \"wait-on http://localhost:3000 && electron .\"",
-        "dist": "electron-builder ./build/electron.js"
+        "dist": "react-scripts build && electron-builder ./build/electron.js"
     },
     "eslintConfig": {
         "extends": "react-app"
