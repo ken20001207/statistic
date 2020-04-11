@@ -3,7 +3,22 @@ import "./App.css";
 import { displaygame, DayDate } from "./classes/types";
 import GameDatas from "./classes/GameDatas";
 import dateCompare from "./methods/dateCompare";
-import { Loader, Progress, Form, FormGroup, ControlLabel, Input, Button, Row, Tooltip } from "rsuite";
+import {
+    Loader,
+    Progress,
+    Form,
+    FormGroup,
+    ControlLabel,
+    Input,
+    Button,
+    Row,
+    Tooltip,
+    SelectPicker,
+    Breadcrumb,
+    Message,
+    Dropdown,
+    Modal,
+} from "rsuite";
 import { BarChart, CartesianGrid, XAxis, YAxis, Legend, Bar } from "recharts";
 import getCarHistoryByPeriod from "./methods/getCarHistoryByPeriod";
 import getDaysCount from "./methods/getDaysCount";
@@ -23,6 +38,7 @@ interface AppStates {
     needtodownload: number;
     downloadfrom: string;
     downloadto: string;
+    selectedNumber: number; // 選擇要查看明細的號碼
 }
 
 class App extends React.Component<{}, AppStates> {
@@ -41,6 +57,7 @@ class App extends React.Component<{}, AppStates> {
             needtodownload: 0,
             downloadfrom: "2020-4-7",
             downloadto: "2020-4-8",
+            selectedNumber: -1,
         };
         this.downloadGameData = this.downloadGameData.bind(this);
         this.handleRangeSelect = this.handleRangeSelect.bind(this);
@@ -161,6 +178,11 @@ class App extends React.Component<{}, AppStates> {
             return null;
         });
         displaydata.sort((d1, d2) => d2.value - d1.value);
+        var sum = 0;
+        displaydata.map((i) => {
+            sum += i.value;
+            return null;
+        });
         if (this.state.gamedatas.years.length === 0)
             return (
                 <div style={{ padding: 60 }}>
@@ -194,13 +216,19 @@ class App extends React.Component<{}, AppStates> {
                             <ControlLabel>起始日期</ControlLabel>
                             <Input
                                 name="from"
+                                style={{ width: "40%", minWidth: 80 }}
                                 onChange={(value) => this.setState({ downloadfrom: value })}
                                 value={this.state.downloadfrom}
                             />
                         </FormGroup>
                         <FormGroup>
                             <ControlLabel>截止日期</ControlLabel>
-                            <Input name="to" onChange={(value) => this.setState({ downloadto: value })} value={this.state.downloadto} />
+                            <Input
+                                style={{ width: "40%", minWidth: 80 }}
+                                name="to"
+                                onChange={(value) => this.setState({ downloadto: value })}
+                                value={this.state.downloadto}
+                            />
                         </FormGroup>
                         <Button
                             style={{ zIndex: 1 }}
@@ -221,40 +249,60 @@ class App extends React.Component<{}, AppStates> {
                 </div>
             );
         return (
-            <div style={{ padding: 80 }}>
-                <Row style={{ marginBottom: 30 }}>
-                    <p style={{ display: "inline-block" }}>統計獲得第</p>
-                    <select
-                        onChange={(e) => {
-                            this.setState({
-                                no: +e.target.value,
-                            });
-                        }}
-                    >
-                        {nos.map((no) => {
-                            return <option value={no}>{no}</option>;
-                        })}
-                    </select>
-                    <p style={{ display: "inline-block" }}>名的次數</p>
-                </Row>
+            <div style={{ padding: 40 }}>
+                <Breadcrumb separator=">">
+                    <Breadcrumb.Item onClick={() => this.setState({ gamedatas: new GameDatas() })}>下載數據</Breadcrumb.Item>
+                    <Breadcrumb.Item active>數據統計</Breadcrumb.Item>
+                </Breadcrumb>
                 <Row style={{ marginBottom: 30 }}>
                     <p style={{ display: "inline-block" }}>統計範圍：從</p>
                     <input
                         name="fromdate"
-                        style={{ display: "inline-block" }}
+                        style={{ display: "inline-block", marginLeft: 16, marginRight: 16, width: 80 }}
                         onChange={this.handleRangeSelect}
                         value={this.state.fromdate}
                     />
                     <p style={{ display: "inline-block" }}>號的第</p>
-                    <input name="from" style={{ display: "inline-block" }} onChange={this.handleRangeSelect} value={this.state.from} />
+                    <input
+                        name="from"
+                        style={{ display: "inline-block", marginLeft: 16, marginRight: 16, width: 80 }}
+                        onChange={this.handleRangeSelect}
+                        value={this.state.from}
+                    />
                     <p style={{ display: "inline-block" }}>場到</p>
-                    <input name="todate" style={{ display: "inline-block" }} onChange={this.handleRangeSelect} value={this.state.todate} />
+                    <input
+                        name="todate"
+                        style={{ display: "inline-block", marginLeft: 16, marginRight: 16, width: 80 }}
+                        onChange={this.handleRangeSelect}
+                        value={this.state.todate}
+                    />
                     <p style={{ display: "inline-block" }}>號的第</p>
-                    <input name="to" style={{ display: "inline-block" }} onChange={this.handleRangeSelect} value={this.state.to} />
+                    <input
+                        name="to"
+                        style={{ display: "inline-block", marginLeft: 16, marginRight: 16, width: 80 }}
+                        onChange={this.handleRangeSelect}
+                        value={this.state.to}
+                    />
                     <p style={{ display: "inline-block" }}>場</p>
                 </Row>
                 <Row style={{ marginBottom: 30 }}>
-                    <Button appearance="primary" onClick={this.composeDisplayData}>
+                    <p style={{ display: "inline-block" }}>統計獲得</p>
+                    <Dropdown
+                        trigger={"hover"}
+                        menuStyle={{ marginLeft: 16, marginRight: 16, width: 120 }}
+                        title={"第" + this.state.no + "名"}
+                        activeKey={this.state.no}
+                    >
+                        {nos.map((no) => {
+                            return (
+                                <Dropdown.Item eventKey={no} onSelect={(value) => this.setState({ no: value })}>
+                                    第 {no} 名
+                                </Dropdown.Item>
+                            );
+                        })}
+                    </Dropdown>
+                    <p style={{ display: "inline-block" }}>的次數</p>
+                    <Button style={{ display: "inline-block", marginLeft: 16 }} appearance="primary" onClick={this.composeDisplayData}>
                         統計
                     </Button>
                 </Row>
@@ -276,8 +324,38 @@ class App extends React.Component<{}, AppStates> {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="value" fill="#8884d8" label={{ position: "top" }} />
+                    <Bar
+                        dataKey="value"
+                        fill="#8884d8"
+                        label={{ position: "top" }}
+                        onClick={(data) => this.setState({ selectedNumber: data.id })}
+                    />
                 </BarChart>
+                <Message
+                    showIcon
+                    type="info"
+                    description={"目前選擇的統計範圍共開了 " + sum + " 期"}
+                    style={{ width: "40%", minWidth: 360, marginTop: 36 }}
+                />
+                <Modal show={this.state.selectedNumber > 0} onHide={() => this.setState({ selectedNumber: -1 })}>
+                    <Modal.Header>
+                        <Modal.Title>出現場次明細</Modal.Title>
+                        <p>
+                            以下是 {this.state.selectedNumber} 號在 {this.state.fromdate} 的第 {this.state.from} 期至 {this.state.todate}{" "}
+                            的第 {this.state.to} 期所得到第 {this.state.no} 名的期數
+                        </p>
+                    </Modal.Header>
+                    <Modal.Body>
+                        {this.state.data.map((game) => {
+                            if (game.result[this.state.no - 1] == this.state.selectedNumber) return <p>{game.id}</p>;
+                        })}
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button onClick={() => this.setState({ selectedNumber: -1 })} appearance="subtle">
+                            關閉
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
             </div>
         );
     }
