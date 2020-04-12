@@ -5,6 +5,7 @@ import Year from "../classes/Year";
 import Day from "../classes/Day";
 import Month from "../classes/Month";
 import { DayDate } from "../classes/types";
+import Game from "../classes/Game";
 
 export default function getCarHistoryByPeriod(
     from: DayDate,
@@ -22,8 +23,8 @@ export default function getCarHistoryByPeriod(
             var promises = [];
             while (!sameDay(datep, dateend)) {
                 promises.push(
-                    await getCarHistoryByDay(datep.getFullYear(), datep.getMonth() + 1, datep.getDate(), addCountFunction).then((day) =>
-                        putDayIntoGameDatas(oriGameDatas, day)
+                    await getCarHistoryByDay(datep.getFullYear(), datep.getMonth() + 1, datep.getDate(), addCountFunction).then((games) =>
+                        putGamesIntoGameDatas(oriGameDatas, games)
                     )
                 );
                 datep.setDate(datep.getDate() + 1);
@@ -36,18 +37,27 @@ export default function getCarHistoryByPeriod(
     });
 }
 
-function putDayIntoGameDatas(gamedatas: GameDatas, day: Day) {
-    if (!gamedatas.hasYear(day.date.year)) {
-        gamedatas.years.push(new Year(day.date));
-    }
-    var thisYear = gamedatas.years.find((year) => year.date.year === day.date.year);
-    if (thisYear === undefined) return;
-    if (!thisYear.hasMonth(day.date.month)) {
-        thisYear.monthes.push(new Month(day.date));
-    }
-    var thisMonth = thisYear.monthes.find((month) => month.date.month === day.date.month);
-    if (thisMonth === undefined) return;
-    if (!thisMonth.hasDay(day.date.date)) {
-        thisMonth.days.push(day);
-    }
+function putGamesIntoGameDatas(gamedatas: GameDatas, games: Array<Game>) {
+    games.map((game) => {
+        /** 確保對應的日期已經存在 */
+        if (!gamedatas.hasYear(game.date.year)) {
+            gamedatas.years.push(new Year(game.date));
+        }
+        var thisYear = gamedatas.years.find((year) => year.date.year === game.date.year);
+        if (thisYear === undefined) return;
+        if (!thisYear.hasMonth(game.date.month)) {
+            thisYear.monthes.push(new Month(game.date));
+        }
+        var thisMonth = thisYear.monthes.find((month) => month.date.month === game.date.month);
+        if (thisMonth === undefined) return;
+        if (!thisMonth.hasDay(game.date.date)) {
+            thisMonth.days.push(new Day(game.date));
+        }
+        var thisDay = thisMonth.days.find((day) => day.date.date === game.date.date);
+        if (thisDay === undefined) return;
+
+        /** 存入該期數據 */
+        thisDay.games.push(game);
+        return null;
+    });
 }
