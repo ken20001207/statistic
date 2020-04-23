@@ -4,10 +4,9 @@ const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 
 const path = require("path");
-const url = require("url");
 const isDev = require("electron-is-dev");
 
-let mainWindow;
+let mainWindow: Electron.BrowserWindow | null;
 
 app.allowRendererProcessReuse = true;
 
@@ -32,6 +31,14 @@ app.on("ready", () => {
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36";
         callback({ cancel: false, requestHeaders: details.requestHeaders });
     });
+    session.defaultSession.cookies.set({ url: "https://www.1396r.com", name: "ccsalt", value: "619a55a254ca3f023899bc6aafbae0a4" }).then(
+        () => {
+            // success
+        },
+        (error) => {
+            console.error(error);
+        }
+    );
 });
 
 app.on("window-all-closed", () => {

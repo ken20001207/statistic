@@ -2,14 +2,15 @@ import React from "react";
 import "./App.css";
 import { displaygame, DayDate } from "./classes/types";
 import GameDatas from "./classes/GameDatas";
-import dateCompare from "./methods/dateCompare";
-import { Button, Row, Tooltip, Breadcrumb, Message, Dropdown, Modal } from "rsuite";
+import dateCompare from "./methods/utils/dateCompare";
+import { Button, Row, Tooltip, Breadcrumb, Message, Dropdown, Modal, Alert } from "rsuite";
 import { BarChart, CartesianGrid, XAxis, YAxis, Legend, Bar } from "recharts";
-import getCarHistoryByPeriod from "./methods/getCarHistoryByPeriod";
-import getDaysCount from "./methods/getDaysCount";
+import getCarHistoryByPeriod from "./methods/vrpk10a/getHistoryByPeriod";
+import getDaysCount from "./methods/utils/getDaysCount";
 
 import "rsuite/dist/styles/rsuite-default.css";
 import Download from "./pages/Download";
+import get_XYFT_HistoryByPeriod from "./methods/xyft/getHistoryByPeriod";
 
 interface AppStates {
     data: Array<displaygame>;
@@ -55,9 +56,23 @@ export default class App extends React.Component<{}, AppStates> {
         this.setState({ downloaded: this.state.downloaded + 1 });
     }
 
-    downloadGameData(dayA: DayDate, dayB: DayDate) {
-        this.setState({ needtodownload: getDaysCount(dayA, dayB) });
-        getCarHistoryByPeriod(dayA, dayB, new GameDatas(), this.addDownloadedCOunt).then((data) => {
+    async downloadGameData(dayA: DayDate, dayB: DayDate, game: "幸運飛艇" | "VR賽車") {
+        // 清空原數據
+        this.setState({ data: [] });
+
+        // 初始化進度條
+        this.setState({ needtodownload: getDaysCount(dayA, dayB) + 1 });
+
+        // 下載資料
+        var data;
+        if (game === "幸運飛艇") {
+            data = await get_XYFT_HistoryByPeriod(dayA, dayB, new GameDatas(), this.addDownloadedCOunt);
+        } else if (game === "VR賽車") {
+            data = await getCarHistoryByPeriod(dayA, dayB, new GameDatas(), this.addDownloadedCOunt);
+        }
+
+        // 存入資料
+        if (data !== undefined) {
             data.years.sort((yearA, yearB) => yearA.date.year - yearB.date.year);
             data.years.map((year) => {
                 year.monthes.sort((monthA, monthB) => monthA.date.month - monthB.date.month);
@@ -79,7 +94,6 @@ export default class App extends React.Component<{}, AppStates> {
                         data.years[data.years.length - 1].monthes[data.years[data.years.length - 1].monthes.length - 1].days.length - 1
                     ].games.length - 1
                 ];
-            console.log(data);
             this.setState({
                 gamedatas: data,
                 needtodownload: 0,
@@ -89,7 +103,9 @@ export default class App extends React.Component<{}, AppStates> {
                 from: firstgame.period % 1000,
                 to: lastgame.period % 1000,
             });
-        });
+        } else {
+            Alert.error("下載資料失敗！");
+        }
     }
 
     composeDisplayData() {
@@ -185,8 +201,8 @@ export default class App extends React.Component<{}, AppStates> {
                         <Breadcrumb.Item onClick={() => this.setState({ gamedatas: new GameDatas() })}>下載數據</Breadcrumb.Item>
                         <Breadcrumb.Item active>數據統計</Breadcrumb.Item>
                     </Breadcrumb>
-                    <Row style={{ marginBottom: 30 }}>
-                        <p style={{ display: "inline-block" }}>統計範圍：從</p>
+                    <Row style={{ marginBottom: 30, marginLeft: 18 }}>
+                        <p style={{ display: "inline-block" }}>分析起點：</p>
                         <input
                             name="fromdate"
                             style={{ display: "inline-block", marginLeft: 16, marginRight: 16, width: 80 }}
@@ -200,7 +216,8 @@ export default class App extends React.Component<{}, AppStates> {
                             onChange={this.handleRangeSelect}
                             value={this.state.from}
                         />
-                        <p style={{ display: "inline-block" }}>場到</p>
+                        <p style={{ display: "inline-block" }}>場</p>
+                        <p style={{ display: "inline-block" }}>分析終點：</p>
                         <input
                             name="todate"
                             style={{ display: "inline-block", marginLeft: 16, marginRight: 16, width: 80 }}
@@ -216,7 +233,7 @@ export default class App extends React.Component<{}, AppStates> {
                         />
                         <p style={{ display: "inline-block" }}>場</p>
                     </Row>
-                    <Row style={{ marginBottom: 30 }}>
+                    <Row style={{ marginBottom: 30, marginLeft: 18 }}>
                         <p style={{ display: "inline-block" }}>統計獲得</p>
                         <Dropdown
                             trigger={"hover"}
@@ -232,7 +249,7 @@ export default class App extends React.Component<{}, AppStates> {
                                 );
                             })}
                         </Dropdown>
-                        <p style={{ display: "inline-block" }}>的次數</p>
+                        <p style={{ display: "inline-block", marginLeft: 18 }}>的次數</p>
                         <Button style={{ display: "inline-block", marginLeft: 16 }} appearance="primary" onClick={this.composeDisplayData}>
                             統計
                         </Button>

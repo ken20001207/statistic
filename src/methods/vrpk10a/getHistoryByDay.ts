@@ -1,4 +1,4 @@
-import Game from "../classes/Game";
+import Game from "../../classes/Game";
 import axios from "axios";
 
 export default function getCarHistoryByDay(year: number, month: number, date: number, addCountFunction: () => void = () => null) {

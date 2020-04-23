@@ -1,13 +1,13 @@
-import GameDatas from "../classes/GameDatas";
-import sameDay from "./sameDay";
-import getCarHistoryByDay from "./getCarHistoryByDay";
-import Year from "../classes/Year";
-import Day from "../classes/Day";
-import Month from "../classes/Month";
-import { DayDate } from "../classes/types";
-import Game from "../classes/Game";
+import GameDatas from "../../classes/GameDatas";
+import sameDay from "../utils/sameDay";
+import getCarHistoryByDay from "./getHistoryByDay";
+import Year from "../../classes/Year";
+import Day from "../../classes/Day";
+import Month from "../../classes/Month";
+import { DayDate } from "../../classes/types";
+import Game from "../../classes/Game";
 
-export default function getCarHistoryByPeriod(
+export default function get_VRPK10A_HistoryByPeriod(
     from: DayDate,
     to: DayDate,
     oriGameDatas: GameDatas = new GameDatas(),
@@ -43,18 +43,24 @@ function putGamesIntoGameDatas(gamedatas: GameDatas, games: Array<Game>) {
         if (!gamedatas.hasYear(game.date.year)) {
             gamedatas.years.push(new Year(game.date));
         }
-        var thisYear = gamedatas.years.find((year) => year.date.year === game.date.year);
-        if (thisYear === undefined) return;
+        var thisYear = gamedatas.years.find((year) => {
+            return year.date.year === game.date.year;
+        });
+        if (thisYear === undefined) return null;
         if (!thisYear.hasMonth(game.date.month)) {
             thisYear.monthes.push(new Month(game.date));
         }
-        var thisMonth = thisYear.monthes.find((month) => month.date.month === game.date.month);
-        if (thisMonth === undefined) return;
+        var thisMonth = thisYear.monthes.find((month) => {
+            return month.date.month === game.date.month;
+        });
+        if (thisMonth === undefined) return null;
         if (!thisMonth.hasDay(game.date.date)) {
             thisMonth.days.push(new Day(game.date));
         }
-        var thisDay = thisMonth.days.find((day) => day.date.date === game.date.date);
-        if (thisDay === undefined) return;
+        var thisDay = thisMonth.days.find((day) => {
+            return day.date.date === game.date.date;
+        });
+        if (thisDay === undefined) return null;
 
         /** 存入該期數據 */
         thisDay.games.push(game);
